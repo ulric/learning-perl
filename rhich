@@ -1,0 +1,45 @@
+#!/usr/local/bin/perl
+
+use Config;
+use strict;
+use warnings;
+
+my $separator = $Config{path_sep};
+
+my $pattern = shift(@ARGV);
+
+if ( $pattern eq "?" or $pattern eq "--help" ) {
+    die
+"Usage: rhich PATTERN - the PATTERN is matched against all program names found in PATH.";
+}
+
+#if (shift(@ARGV) ne "") {
+#	die "kann mit dem zweiten parameter nichts anfangen!\n";
+#}
+
+#print "ich wurde mit dem pattern $pattern aufgerufen.\n";
+
+my @pfade = split /$separator/, $ENV{"PATH"};
+my $pfad;
+my @programs;
+
+foreach $pfad (@pfade) {
+
+    #erst testen, ob das verzeichnis existiert, bevor ls abgesetzt wird!
+    # TODO: ohne system-aufruf
+    system "test -d $pfad";
+    if ( $? == 0 ) {
+
+        # liste auf den bildschirm: system "ls -1 $pfad";
+        push @programs, qx(ls -1 $pfad);
+    }
+}
+
+my $program;
+foreach $program (@programs) {
+    print $program;
+}
+
+print "\nend of program.\n";
+
+# vim: sw=4

@@ -5,41 +5,42 @@ use strict;
 use warnings;
 
 my $separator = $Config{path_sep};
-
 my $pattern = shift(@ARGV);
 
-if ( $pattern eq "?" or $pattern eq "--help" ) {
-    die
-"Usage: rhich PATTERN - the PATTERN is matched against all program names found in PATH.";
+if ( $pattern eq "" or $pattern eq "?" or $pattern eq "--help" ) {
+    die "Usage: rhich PATTERN - the PATTERN is matched against all program names found in PATH.";
 }
 
-#if (shift(@ARGV) ne "") {
-#	die "kann mit dem zweiten parameter nichts anfangen!\n";
-#}
-
-#print "ich wurde mit dem pattern $pattern aufgerufen.\n";
+if (shift(@ARGV) ne "") {
+	print "Warning: Excessive parameter(s) are ignored.\n";
+}
 
 my @pfade = split /$separator/, $ENV{"PATH"};
 my $pfad;
 my @programs;
+my $listing;
+my @liste;
+my $name;
 
 foreach $pfad (@pfade) {
-
-    #erst testen, ob das verzeichnis existiert, bevor ls abgesetzt wird!
-    # TODO: ohne system-aufruf
-    system "test -d $pfad";
-    if ( $? == 0 ) {
-
-        # liste auf den bildschirm: system "ls -1 $pfad";
-        push @programs, qx(ls -1 $pfad);
+    if (-e $pfad) {
+        $listing = (qx(ls -1 $pfad));
+		@liste=split /\n/, $listing;
+		foreach $name (@liste) {
+	        push @programs, $name;
+		}
     }
 }
 
 my $program;
 foreach $program (@programs) {
-    print $program;
+	$_=$program;
+    if (/$pattern/) {
+		print $program, ":\n";
+		system "which $program";
+		print "\n";
+	}
 }
-
-print "\nend of program.\n";
+exit 0
 
 # vim: sw=4

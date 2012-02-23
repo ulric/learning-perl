@@ -6,41 +6,25 @@ use warnings;
 
 my $separator = $Config{path_sep};
 my $pattern = shift(@ARGV);
-
-if ( $pattern eq "" or $pattern eq "?" or $pattern eq "--help" ) {
-    die "Usage: rhich PATTERN - the PATTERN is matched against all program names found in PATH.";
-}
-
-if (shift(@ARGV) ne "") {
-	print "Warning: Excessive parameter(s) are ignored.\n";
-}
-
 my @pfade = split /$separator/, $ENV{"PATH"};
 my $pfad;
-my @programs;
-my $listing;
-my @liste;
-my $name;
+my @files;
+my $file;
 
 foreach $pfad (@pfade) {
-    if (-e $pfad) {
-        $listing = (qx(ls -1 $pfad));
-		@liste=split /\n/, $listing;
-		foreach $name (@liste) {
-	        push @programs, $name;
+	if (-e $pfad) {
+		chdir $pfad;
+		@files=<*>;
+		foreach $file (@files) {
+			if (-x $file) {
+				if ($file =~ m/$pattern/) {
+					print "$file is in $pfad\n";
+				}
+			}
 		}
-    }
-}
-
-my $program;
-foreach $program (@programs) {
-	$_=$program;
-    if (/$pattern/) {
-		print $program, ":\n";
-		system "which $program";
-		print "\n";
 	}
 }
+
 exit 0
 
 # vim: sw=4

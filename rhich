@@ -1,25 +1,32 @@
 #!/usr//bin/env perl
 
-use Config;
+use 5.010;
 use strict;
 use warnings;
+use Config;
 
-my $separator = $Config{path_sep};
-my $pattern = shift(@ARGV) or die "Usage: rhich PATTERN - The search pattern is mandatory.\n";
-my @pfade = split /$separator/, $ENV{"PATH"};
+my $separator=$Config{path_sep};
+my $osname=$Config{osname};
+my $pattern=shift @ARGV or die "Usage: rhich PATTERN - The search pattern is mandatory.\n";
+my @pfade=split /$separator/, $ENV{"PATH"};
+my $dirdelim="/";
+
+if ($osname eq "windows") {
+  $dirdelim="\\";
+}
 
 foreach my $pfad (@pfade) {
-	if (-e $pfad) {
-		chdir $pfad;
-		my @files=glob"$pattern*";
-		foreach my $file (@files) {
-			if (-x $file) {
-				print "$file is in $pfad\n";
-			}
-		}
-	}
+  if (-e $pfad) {
+    chdir $pfad;
+    my @files=glob "$pattern";
+    foreach my $file (@files) {
+      if (-x $file and !-d $file) {
+        say "$pfad$dirdelim$file";
+      }
+    }
+  }
 }
 
 exit 0
 
-# vim: sw=4
+# vim: sw=2

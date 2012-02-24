@@ -1,25 +1,20 @@
-#!/usr/local/bin/perl
+#!/usr//bin/env perl
 
 use Config;
 use strict;
 use warnings;
 
 my $separator = $Config{path_sep};
-my $pattern = shift(@ARGV);
+my $pattern = shift(@ARGV) or die "Usage: rhich PATTERN - The search pattern is mandatory.\n";
 my @pfade = split /$separator/, $ENV{"PATH"};
-my $pfad;
-my @files;
-my $file;
 
-foreach $pfad (@pfade) {
+foreach my $pfad (@pfade) {
 	if (-e $pfad) {
 		chdir $pfad;
-		@files=<*>;
-		foreach $file (@files) {
+		my @files=glob"$pattern*";
+		foreach my $file (@files) {
 			if (-x $file) {
-				if ($file =~ m/$pattern/) {
-					print "$file is in $pfad\n";
-				}
+				print "$file is in $pfad\n";
 			}
 		}
 	}

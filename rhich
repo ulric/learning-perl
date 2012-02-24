@@ -7,7 +7,8 @@ use Config;
 
 my $separator=$Config{path_sep};
 my $osname=$Config{osname};
-my $pattern=shift @ARGV or die "Usage: rhich PATTERN - The search pattern is mandatory.\n";
+die "Usage: rhich PATTERN - The search pattern is mandatory.\n" unless defined $ARGV[0];
+my $pattern=shift @ARGV;
 my @pfade=split /$separator/, $ENV{"PATH"};
 my $dirdelim="/";
 

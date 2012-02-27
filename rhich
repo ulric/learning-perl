@@ -4,24 +4,24 @@ use 5.010;
 use strict;
 use warnings;
 use Config;
-use File::Spec;
+use File::Spec::Functions qw(catfile);
 
-die "Usage: rhich PATTERN - The search pattern is mandatory.\n" unless defined $ARGV[0];
+my $pattern = shift @ARGV;
+die "Usage: rhich PATTERN - The search pattern is mandatory.\n"
+  unless defined $pattern;
 
-my $separator=$Config{path_sep};
-my $pattern=shift @ARGV;
-my @paths=split /$separator/, $ENV{"PATH"};
+my $separator = $Config{path_sep};
+my @paths = split /$separator/, $ENV{"PATH"};
 
 foreach my $path (@paths) {
-  next unless -e $path; 
-  my @files=glob File::Spec->catfile ($path, $pattern);
+  my @files = glob catfile($path, $pattern);
   foreach my $file (@files) {
-    if (-x $file and !-d $file) {
-      say File::Spec->catfile ($path, $file);
+    if (-x $file && !-d $file) {
+      say catfile ($file);
     }
   }
 }
 
 exit 0
 
-# vim: sw=2
+  # vim: sw=2

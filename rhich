@@ -1,4 +1,4 @@
-#!/usr//bin/env perl
+#!/usr/bin/env perl
 
 use 5.010;
 use strict;
@@ -15,10 +15,10 @@ my @paths = split /$separator/, $ENV{"PATH"};
 
 foreach my $path (@paths) {
   my @files = glob catfile($path, $pattern);
-  foreach my $file (@files) {
+	foreach my $file (@files) {
     if (-x $file && !-d $file) {
-      say catfile ($file);
-    }
+      say $file;
+		}
   }
 }
 

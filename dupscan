@@ -1,0 +1,47 @@
+#!/usr/bin/env perl
+
+use common::sense;
+use Digest::MD5 qw(md5_hex);
+use File::Find;  #not needed yet, later for recursion
+use Getopt::Std; #not needed yet, later for other path than working directory
+
+# TODO: option -r (recursive); parameter DIR (if different from actual directory).
+
+my @files=glob"*";
+my %filehashes;
+my %duplicates;
+
+foreach my $file(@files) {
+  if (-d $file) {
+	  next;
+	}
+	open FILE, "< $file";
+	my $digest=md5_hex(<FILE>);
+	if (exists $filehashes{$digest}) {
+		$duplicates{$file}=$digest;
+    say "Duplicate found: $file and $filehashes{$digest} have the same content.";
+		next;
+	}	
+	$filehashes{$digest}=$file;
+}
+
+while(my($file, $digest) = each %duplicates) {
+  say;
+	say "$file <=> $filehashes{$digest}";
+	say "which one to delete?";
+}
+
+exit 0;
+
+# auf einen -r switch erstmal verzichten.
+# das aktuelle verzeichnis in ein array einlesen (wie gehabt) und dann jede datei öffnen
+# (filehandle oder so) und hashen. das ganze (dateiname und hashwert) in einem hash speichern.
+# dann den hashwert jeder datei mit dem jeder anderen vergleichen (aber nur noch die übrigen) und
+# bei übereinstimmung den dateinamen (nicht die komplette datei, könnte ja binär sein!) ausgeben.
+# dann den anwender fragen, welche der identischen dateinen (die ja verschiedene namen haben)
+# gelöscht werden soll (oder irgendeine eingabe für keine).
+#
+# sollte der -r switch doch noch dazukommen, können die dateinamen gleich sein, aber in
+# verschieden pfaden stehen.
+#
+# als aufrufparameter könnte auch ein anderes als das aktuelle verzeichnis eingegeben werden.

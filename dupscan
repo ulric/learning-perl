@@ -5,10 +5,10 @@ use Digest::MD5 qw(md5_hex);
 use File::Find;
 use Getopt::Std;
 
-my $opts={};
+my $opts = {};
 getopts('r', $opts);
 
-my $dir=shift//'.';
+my $dir = shift // '.';
 die "Cannot access $dir\n" unless (-x $dir);
 
 my @files;
@@ -16,34 +16,35 @@ my %filehashes;
 my $dups;
 
 if ($opts->{r}) {
-	find(sub {
-    push @files, $File::Find::name if (-f && !-l);
-  }, $dir);
+  find(
+    sub {
+      push @files, $File::Find::name if (-f && !-l);
+    }, $dir);
 }
 else {
-  @files=glob"$dir/*";
+  @files = glob "$dir/*";
 }
 
-foreach my $file(@files) {
+foreach my $file (@files) {
   if (-d $file or -l $file) {
     next;
   }
   open FILE, "< $file" or die "Cannot open $file\n";
-  my $digest=md5_hex(<FILE>);
-	close FILE or die "Cannot close $file\n";
+  my $digest = md5_hex(<FILE>);
+  close FILE or die "Cannot close $file\n";
   push @{$filehashes{$digest}}, $file;
 }
 
-foreach my $digest(keys %filehashes) {
-  my $array_ref=$filehashes{$digest}; 
-  if (scalar(@$array_ref)>1) {
-	  $dups++;
-		say "these files are duplicates:";
-		foreach my $file (@$array_ref) {
+foreach my $digest (keys %filehashes) {
+  my $array_ref = $filehashes{$digest};
+  if (scalar(@$array_ref) > 1) {
+    $dups++;
+    say "these files are duplicates:";
+    foreach my $file (@$array_ref) {
       say $file;
     }
     say;
-	}
-}		
+  }
+}
 
 say "no duplicates detected." unless $dups;

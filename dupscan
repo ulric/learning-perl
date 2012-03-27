@@ -2,35 +2,48 @@
 
 use common::sense;
 use Digest::MD5 qw(md5_hex);
-use File::Find;  #not needed yet, later for recursion
-use Getopt::Std; #not needed yet, later for other path than working directory
+use File::Find;
+use Getopt::Std;
 
-# TODO: option -r (recursive); parameter DIR (if different from actual directory).
+my $opts={};
+getopts('r', $opts);
 
-my @files=glob'*';
+my $dir=shift//'.';
+die "Cannot access $dir\n" unless (-x $dir);
+
+my @files;
 my %filehashes;
+my $dups;
+
+if ($opts->{r}) {
+	find(sub {
+    push @files, $File::Find::name if (-f && !-l);
+  }, $dir);
+}
+else {
+  @files=glob"$dir/*";
+}
 
 foreach my $file(@files) {
   if (-d $file or -l $file) {
-	  next;
-	}
-	open FILE, "< $file";
-	my $digest=md5_hex(<FILE>);
-	if (exists $filehashes{$digest}) {
-	  push @{$filehashes{$digest}}, $file;
-    print "duplicates detected: ";
-    foreach $file (@{$filehashes{$digest}}) {
-			print "$file   ";
-    }
-	print "\n";	
-	next;
-	}	
-	$filehashes{$digest}=[$file];
+    next;
+  }
+  open FILE, "< $file" or die "Cannot open $file\n";
+  my $digest=md5_hex(<FILE>);
+	close FILE or die "Cannot close $file\n";
+  push @{$filehashes{$digest}}, $file;
 }
 
-exit 0;
+foreach my $digest(keys %filehashes) {
+  my $array_ref=$filehashes{$digest}; 
+  if (scalar(@$array_ref)>1) {
+	  $dups++;
+		say "these files are duplicates:";
+		foreach my $file (@$array_ref) {
+      say $file;
+    }
+    say;
+	}
+}		
 
-# sollte der -r switch doch noch dazukommen, können die dateinamen gleich sein, aber in
-# verschieden pfaden stehen - kein problem, kompletten pfad mit namen speichern.
-#
-# als aufrufparameter könnte auch ein anderes als das aktuelle verzeichnis eingegeben werden.
+say "no duplicates detected." unless $dups;

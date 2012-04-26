@@ -1,0 +1,74 @@
+#!/usr/bin/env perl
+
+# usage: dirmon [DIRECTORY] - directory is defaulting to .
+
+use common::sense;
+use Digest::MD5 qw(md5_hex);
+
+my $dir=shift//'.';
+die "Cannot access $dir\n" unless (-x $dir && -d $dir);
+chdir $dir;
+my @files=glob'*';
+@files=grep(!-d $_, @files);
+
+sub createfile() {
+  open HASHFILE, ">.filehashes" or die "Cannot open .filehashes\n";
+  print HASHFILE "#name:size:MD5\n";
+  foreach my $file (@files) {
+    my $size=(stat($file))[7]; 
+    open FILE, "<$file" or die "Cannot open $file\n";
+    my $digest=md5_hex(<FILE>);
+    close FILE or die "Cannot close $file\n";
+    print HASHFILE $file.':'.$size.':'.$digest."\n";
+  }
+  close HASHFILE or die "Cannot close .filehashes\n";
+}
+
+unless (-e ".filehashes") {
+  warn "monitoring file .filehashes doesn't exist yet; starting to monitor this directory.\n";
+  &createfile;
+  exit 0;
+}
+
+my (%old,%new);
+
+open HASHFILE, "<.filehashes";
+while (<HASHFILE>) {
+  chomp;
+  next if ($_=~'^#'); #skip comments
+  my ($name, $size, $digest)=split ':', $_;
+  $old{$name}=[$digest, $size];
+}
+close HASHFILE or die "Cannot close .filehashes\n";
+
+foreach my $file(@files) {
+  open FILE, "<$file" or die "Cannot open $file\n";
+  $new{$file}=[md5_hex(<FILE>), (stat($file))[7]];
+  close FILE or die "Cannot close $file\n";
+}
+
+foreach my $file (keys %new) {
+  next if $old{$file}[0]eq$new{$file}[0];
+  say "$file has changed.\n";
+  say "Was:";
+  say "Size: ".$old{$file}[1];
+  say "MD5:  ".$old{$file}[0];
+  say "\nIs now:";
+  say "Size: ".$new{$file}[1];
+  say "MD5:  ".$new{$file}[0]."\n";
+}
+
+exit 0;
+
+# dateien können gleich, geändert, dazugekommen oder verschwunden sein!
+#
+# die idee: die eingelesene liste (old) und das aktuelle directory (new) jeweils in einen hash mit dem
+# dateinamen als schlüssel speichern. egal, worüber die schleife läuft, die digests der gleichen filenames 
+# vergleichen und danach aus beiden listen streichen! was im hash old übrigbleibt, sind verschwundene dateien
+# und was im hash new übrigbleibt, sind dazugekommene.
+
+# die checksum datei signieren? wo wäre dann der private schlüssel?
+# letzteres ist recht aufwendig, siehe CPAN-Modul (unleicht verständlich).
+# das macht nur sinn, wenn der dämon mit anderen rechten als der user läuft.
+#
+# also erstmal weglassen.
